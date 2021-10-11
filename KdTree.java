@@ -35,20 +35,20 @@ public class KdTree {
             return new Node(point, rect);
         }
         // If the point already exists return it
-        if (node.p.x() == point.x() && node.p.y() == point.y()) return node;
+        else if (node.p.x() == point.x() && node.p.y() == point.y()) return node;
 
         // If the point doesn't exist look recursively for the place where it belongs.
         if (vertical) {
             // If the current node is vertical compare x-coordinates.
             double compareX = point.x() - node.p.x();
-            if (compareX < 0) node.lb = insert(node.lb, point, xMin, yMin, node.p.x(), yMax, false);
-            else node.rt = insert(node.rt, point, node.p.x(), yMin, xMax, yMax, false);
+            if (compareX < 0) node.lb = insert(node.lb, point, xMin, yMin, node.p.x(), yMax, !vertical);
+            else node.rt = insert(node.rt, point, node.p.x(), yMin, xMax, yMax, !vertical);
         }
         else {
             // If the current node is vertical compare y-coordinates.
             double compareY = point.y() - node.p.y();
-            if (compareY < 0) node.lb = insert(node.lb, point, xMin, yMin, node.p.y(), yMax, true);
-            else node.rt = insert(node.rt, point, node.p.y(), yMin, xMax, yMax, true);
+            if (compareY < 0) node.lb = insert(node.lb, point, xMin, yMin, xMax, node.p.y(), !vertical);
+            else node.rt = insert(node.rt, point, xMin, node.p.y(), xMax, yMax, !vertical);
         }
 
         return node;
@@ -85,20 +85,20 @@ public class KdTree {
             StdDraw.line(node.rect.xmin(), node.p.y(), node.rect.xmax(), node.p.y());
         }
         // Recursively traverse tree
-        draw(node.rt, !vertical);
         draw(node.lb, !vertical);
+        draw(node.rt, !vertical);
     }
 
-    private void range(Node node, RectHV rect, SET<Point2D> set) {
+    private void range(Node node, RectHV rect, SET<Point2D> inRange) {
         if (node == null) return;
-        //
+        // If the current point is in the rectangle add it to the inRange set
         if (rect.contains(node.p)) {
-            set.add(node.p);
+            inRange.add(node.p);
         }
         //
         if (rect.intersects(node.rect)) {
-            range(node.rt, rect, set);
-            range(node.lb, rect, set);
+            range(node.lb, rect, inRange);
+            range(node.rt, rect, inRange);
         }
     }
 
@@ -156,9 +156,9 @@ public class KdTree {
 
     // all points in the set that are inside the rectangle
     public Iterable<Point2D> range(RectHV rect) {
-        SET<Point2D> set = new SET<>();
-        range(root, rect, set);
-        return set;
+        SET<Point2D> inRange = new SET<>();
+        range(root, rect, inRange);
+        return inRange;
     }
 
     // a nearest neighbor in the set to p; null if set is empty
